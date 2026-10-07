@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chip, cat_filter %}
+{% block content %}
+<h1>TODO 管理</h1>
+{{ cat_filter(categories, current_category, "/todos") }}
+<ul class="list">
+  {% for t in todos %}
+  <li class="card {{ 'archived' if t.archived }}"><a class="row" href="/todos/{{ t.id }}">
+    <div class="grow"><div class="title">{{ t.title }}</div>
+    <div class="meta">
+      {{ chip(t.category.name if t.category, t.category.color if t.category) }}
+      <span>{{ describe(t) }}</span>
+      <span>{{ '持ち越し' if t.carry_type == 'carry_over' else '当日限り' }}</span>
+      {% if t.archived %}<span class="badge gray">完了/停止中</span>
+      {% else %}{% set n = next_occurrence_after(t, today) %}{% if n %}<span>次回 {{ n|fmt_date }}</span>{% endif %}{% endif %}
+    </div></div>
+  </a></li>
+  {% else %}
+  <li class="empty">TODO がありません。右下の＋から作成できます</li>
+  {% endfor %}
+</ul>
+{% endblock %}

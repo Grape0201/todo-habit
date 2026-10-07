@@ -1,0 +1,10 @@
+{% macro chip(name, color) %}{% if name %}<span class="chip" style="--c: {{ color }}">{{ name }}</span>{% endif %}{% endmacro %}
+
+{% macro cat_filter(categories, current, base) %}
+<div class="filters">
+  <a href="{{ base }}" class="pill {{ 'on' if current is none }}">すべて</a>
+  {% for c in categories %}
+  <a href="{{ base }}?category={{ c.id }}" class="pill {{ 'on' if current == c.id }}" style="--c: {{ c.color }}">{{ c.name }}</a>
+  {% endfor %}
+</div>
+{% endmacro %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>カテゴリ</h1>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<ul class="list">
+  {% for c in categories %}
+  <li class="card">
+    <form class="row cat" method="post" action="/categories/{{ c.id }}">
+      <input type="color" name="color" value="{{ c.color }}">
+      <input type="text" name="name" value="{{ c.name }}" maxlength="50" class="grow">
+      <button class="btn">保存</button>
+      <button class="btn danger" formaction="/categories/{{ c.id }}/delete" onclick="return confirm('削除しますか？このカテゴリの TODO は未分類になります。')">削除</button>
+    </form>
+  </li>
+  {% endfor %}
+</ul>
+<h2>追加</h2>
+<form class="row cat card" method="post" action="/categories">
+  <input type="color" name="color" value="#6c8cff">
+  <input type="text" name="name" placeholder="例: 仕事" maxlength="50" required class="grow">
+  <button class="btn primary">追加</button>
+</form>
+{% endblock %}

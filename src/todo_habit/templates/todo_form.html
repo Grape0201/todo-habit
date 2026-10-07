@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+{% set t = todo %}
+<h1>{{ 'TODO を編集' if t else 'TODO を作成' }}</h1>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+<form class="form" method="post" enctype="multipart/form-data" action="{{ '/todos/%d' % t.id if t else '/todos' }}" id="todo-form">
+  <label>タイトル
+    <input type="text" name="title" required maxlength="200" value="{{ t.title if t else '' }}" autofocus>
+  </label>
+
+  <label>カテゴリ
+    <select name="category_id">
+      <option value="">未分類</option>
+      {% for c in categories %}
+      <option value="{{ c.id }}" {{ 'selected' if t and t.category_id == c.id }}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <fieldset>
+    <legend>繰り返し</legend>
+    <select name="recurrence" id="recurrence">
+      <option value="none" {{ 'selected' if not t or t.recurrence == 'none' }}>なし（単発）</option>
+      <option value="weekly" {{ 'selected' if t and t.recurrence == 'weekly' }}>毎週</option>
+      <option value="monthly_nth" {{ 'selected' if t and t.recurrence == 'monthly_nth' }}>毎月 第N曜日</option>
+    </select>
+
+    <div data-show="none">
+      <label>日付（空欄なら「いつか」）
+        <input type="date" name="due_date" value="{{ t.due_date if t and t.due_date else '' }}">
+      </label>
+    </div>
+
+    <div data-show="weekly monthly_nth">
+      <div class="label">曜日（複数選択可）</div>
+      <div class="toggles">
+        {% for name in WEEKDAY_NAMES %}
+        <label class="toggle"><input type="checkbox" name="weekdays" value="{{ loop.index0 }}" {{ 'checked' if t and loop.index0 in t.weekday_list }}><span>{{ name }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div data-show="monthly_nth">
+      <div class="label">第何週（複数選択可）</div>
+      <div class="toggles">
+        {% for n in [1, 2, 3, 4, 5, -1] %}
+        <label class="toggle"><input type="checkbox" name="nth_weeks" value="{{ n }}" {{ 'checked' if t and n in t.nth_list }}><span>{{ NTH_NAMES[n] }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div data-show="weekly monthly_nth" class="two">
+      <label>開始日（任意）<input type="date" name="start_date" value="{{ t.start_date if t and t.start_date else '' }}"></label>
+      <label>終了日（任意）<input type="date" name="end_date" value="{{ t.end_date if t and t.end_date else '' }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset id="carry">
+    <legend>タイプ</legend>
+    <label class="radio"><input type="radio" name="carry_type" value="day_only" {{ 'checked' if not t or t.carry_type == 'day_only' }}> その日が終わったらリストから消える</label>
+    <label class="radio"><input type="radio" name="carry_type" value="carry_over" {{ 'checked' if t and t.carry_type == 'carry_over' }}> その日が終わっても完了するまで残る</label>
+    <p class="hint" id="carry-hint" hidden>日付なしの TODO は自動的に「残る」タイプになります。</p>
+  </fieldset>
+
+  <label>メモ
+    <textarea name="note" rows="4">{{ t.note if t else '' }}</textarea>
+  </label>
+
+  {% if t and t.attachments %}
+  <div class="label">登録済みの写真</div>
+  <div class="gallery">
+    {% for a in t.attachments %}
+    <div class="thumb">
+      <img src="/uploads/{{ a.thumb_filename }}" alt="">
+      <button type="submit" form="del-{{ a.id }}" class="x" aria-label="写真を削除">×</button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <label>写真を追加（複数可）
+    <input type="file" name="photos" accept="image/*" multiple>
+  </label>
+
+  <div class="actions">
+    <button class="btn primary" type="submit">保存</button>
+    <a class="btn" href="{{ '/todos/%d' % t.id if t else '/todos' }}">キャンセル</a>
+  </div>
+</form>
+
+{% if t %}{% for a in t.attachments %}
+<form id="del-{{ a.id }}" method="post" action="/attachments/{{ a.id }}/delete" onsubmit="return confirm('この写真を削除しますか？')"></form>
+{% endfor %}{% endif %}
+
+<script>
+  const sel = document.getElementById('recurrence');
+  const due = document.querySelector('[name=due_date]');
+  function sync() {
+    document.querySelectorAll('[data-show]').forEach(el => {
+      el.hidden = !el.dataset.show.split(' ').includes(sel.value);
+    });
+    const noDate = sel.value === 'none' && !due.value;
+    const carry = document.querySelector('[name=carry_type][value=carry_over]');
+    if (noDate) carry.checked = true;
+    document.querySelectorAll('[name=carry_type]').forEach(r => r.disabled = false);
+    document.getElementById('carry-hint').hidden = !noDate;
+  }
+  sel.addEventListener('change', sync);
+  due.addEventListener('input', sync);
+  sync();
+</script>
+{% endblock %}

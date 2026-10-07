@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chip %}
+{% block content %}
+<h1>完了ログ <small>{{ total }}件</small></h1>
+<form class="form search" method="get" action="/logs">
+  <input type="search" name="q" value="{{ q }}" placeholder="キーワード（タイトル・メモ・コメント）">
+  <div class="two">
+    <select name="category">
+      <option value="">すべてのカテゴリ</option>
+      {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if category == c.id }}>{{ c.name }}</option>{% endfor %}
+    </select>
+    <span></span>
+    <input type="date" name="date_from" value="{{ date_from }}" aria-label="開始日">
+    <input type="date" name="date_to" value="{{ date_to }}" aria-label="終了日">
+  </div>
+  <button class="btn primary">検索</button>
+  <a class="btn" href="/logs">クリア</a>
+</form>
+
+{% set ns = namespace(day=None) %}
+<ul class="list">
+  {% for c in rows %}
+  {% set day = c.completed_at.date() %}
+  {% if day != ns.day %}{% set ns.day = day %}</ul><h2>{{ day|fmt_date }}</h2><ul class="list">{% endif %}
+  <li class="card"><div class="row">
+    <div class="grow">
+      <div class="title">
+        {% if c.todo_id %}<a href="/todos/{{ c.todo_id }}">{{ c.title_snapshot }}</a>{% else %}{{ c.title_snapshot }}{% endif %}
+      </div>
+      <div class="meta">
+        {{ chip(c.category_snapshot, c.category_color_snapshot) }}
+        <span>{{ c.completed_at.strftime('%H:%M') }}</span>
+        {% if c.occurrence_date != c.completed_at.date() %}<span>{{ c.occurrence_date|fmt_date }} の分</span>{% endif %}
+        {% if c.comment %}<span>💬 {{ c.comment }}</span>{% endif %}
+      </div>
+      {% if c.note_snapshot %}<div class="note small">{{ c.note_snapshot }}</div>{% endif %}
+    </div>
+    <form method="post" action="/completions/{{ c.id }}/undo" onsubmit="return confirm('このログを削除して未完了に戻しますか？')"><button class="link">取り消す</button></form>
+  </div></li>
+  {% else %}
+  <li class="empty">該当するログはありません</li>
+  {% endfor %}
+</ul>
+
+{% if pages > 1 %}
+<div class="pager">
+  {% set qs = {'q': q, 'category': category or '', 'date_from': date_from, 'date_to': date_to} %}
+  {% if page > 1 %}<a class="btn" href="/logs?{{ (qs | urlencode) }}&page={{ page - 1 }}">← 前へ</a>{% endif %}
+  <span>{{ page }} / {{ pages }}</span>
+  {% if page < pages %}<a class="btn" href="/logs?{{ (qs | urlencode) }}&page={{ page + 1 }}">次へ →</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

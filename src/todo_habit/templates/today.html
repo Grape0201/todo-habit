@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chip, cat_filter %}
+{% block content %}
+<h1>今日 <small>{{ today|fmt_date }}</small></h1>
+{{ cat_filter(categories, current_category, "/") }}
+
+<ul class="list">
+  {% for it in items %}
+  {% set t = it.todo %}
+  <li class="card {{ 'overdue' if it.overdue_days > 0 }}">
+    <form hx-post="/todos/{{ t.id }}/complete" hx-target="closest li" hx-swap="outerHTML" method="post" action="/todos/{{ t.id }}/complete">
+      <input type="hidden" name="occurrence_date" value="{{ it.occurrence_date or '' }}">
+      <div class="row">
+        <button class="check" title="完了にする" aria-label="完了にする"></button>
+        <a class="grow" href="/todos/{{ t.id }}">
+          <div class="title">{{ t.title }}</div>
+          <div class="meta">
+            {{ chip(t.category.name if t.category, t.category.color if t.category) }}
+            <span>{{ describe(t) }}</span>
+            {% if it.overdue_days > 0 %}<span class="badge">{{ it.occurrence_date|fmt_date }} の分・{{ it.overdue_days }}日超過</span>{% endif %}
+            {% if t.note %}<span title="メモあり">📝</span>{% endif %}
+            {% if t.attachments %}<span title="写真あり">📷{{ t.attachments|length }}</span>{% endif %}
+          </div>
+        </a>
+      </div>
+      <details class="comment">
+        <summary>コメントを添えて完了</summary>
+        <input type="text" name="comment" placeholder="ひとこと（任意）。入力後に左の○を押す">
+      </details>
+    </form>
+  </li>
+  {% else %}
+  <li class="empty">今日やることはありません 🎉</li>
+  {% endfor %}
+</ul>
+
+{% if done %}
+<h2>今日完了したもの</h2>
+<ul class="list done">
+  {% for c in done %}
+  <li class="card">
+    <div class="row">
+      <span class="check on">✓</span>
+      <div class="grow">
+        <div class="title">{{ c.title_snapshot }}</div>
+        <div class="meta">{{ chip(c.category_snapshot, c.category_color_snapshot) }}{% if c.comment %}<span>💬 {{ c.comment }}</span>{% endif %}</div>
+      </div>
+      <form method="post" action="/completions/{{ c.id }}/undo"><button class="link">取り消す</button></form>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chip %}
+{% block content %}
+<h1>{{ todo.title }}</h1>
+<div class="meta">
+  {{ chip(todo.category.name if todo.category, todo.category.color if todo.category) }}
+  <span>{{ describe(todo) }}</span>
+  <span>{{ '持ち越し' if todo.carry_type == 'carry_over' else '当日限り' }}</span>
+  {% if todo.start_date %}<span>{{ todo.start_date|fmt_date }}〜</span>{% endif %}
+  {% if todo.end_date %}<span>〜{{ todo.end_date|fmt_date }}</span>{% endif %}
+  {% if todo.archived %}<span class="badge gray">完了/停止中</span>{% endif %}
+</div>
+
+{% if todo.note %}<p class="note">{{ todo.note }}</p>{% endif %}
+
+{% if todo.attachments %}
+<div class="gallery">
+  {% for a in todo.attachments %}
+  <a href="/uploads/{{ a.filename }}" target="_blank"><img src="/uploads/{{ a.thumb_filename }}" alt="{{ a.original_name }}" loading="lazy"></a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="actions">
+  <a class="btn" href="/todos/{{ todo.id }}/edit">編集</a>
+  <form method="post" action="/todos/{{ todo.id }}/archive">
+    <button class="btn">{{ '再開する' if todo.archived else '停止する' }}</button>
+  </form>
+  <form method="post" action="/todos/{{ todo.id }}/delete" onsubmit="return confirm('削除しますか？完了ログは残ります。')">
+    <button class="btn danger">削除</button>
+  </form>
+</div>
+
+<h2>完了履歴</h2>
+<ul class="list">
+  {% for c in todo.completions %}
+  <li class="card"><div class="row">
+    <div class="grow"><div class="title">{{ c.completed_at.strftime('%Y/%m/%d %H:%M') }}</div>
+    <div class="meta"><span>{{ c.occurrence_date|fmt_date }} の分</span>{% if c.comment %}<span>💬 {{ c.comment }}</span>{% endif %}</div></div>
+    <form method="post" action="/completions/{{ c.id }}/undo"><button class="link">取り消す</button></form>
+  </div></li>
+  {% else %}
+  <li class="empty">まだ完了していません</li>
+  {% endfor %}
+</ul>
+{% endblock %}

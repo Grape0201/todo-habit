@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import chip %}
+{% block content %}
+<h1>今後7日間の予定</h1>
+{% for d, todos in days %}
+<h2>{{ d|fmt_date }}</h2>
+<ul class="list">
+  {% for t in todos %}
+  <li class="card"><a class="row" href="/todos/{{ t.id }}">
+    <div class="grow"><div class="title">{{ t.title }}</div>
+    <div class="meta">{{ chip(t.category.name if t.category, t.category.color if t.category) }}<span>{{ describe(t) }}</span></div></div>
+  </a></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">予定はありません</p>
+{% endfor %}
+{% endblock %}
