@@ -34,6 +34,18 @@
   {% endfor %}
 </ul>
 
+<h2>明日の予定 <small>{{ tomorrow|fmt_date }}</small></h2>
+<ul class="list tomorrow">
+  {% for t in tomorrow_items %}
+  <li class="card"><a class="row" href="/todos/{{ t.id }}">
+    <div class="grow"><div class="title">{{ t.title }}</div>
+    <div class="meta">{{ chip(t.category.name if t.category, t.category.color if t.category) }}<span>{{ describe(t) }}</span></div></div>
+  </a></li>
+  {% else %}
+  <li class="empty">明日の予定はありません</li>
+  {% endfor %}
+</ul>
+
 {% if done %}
 <h2>今日完了したもの</h2>
 <ul class="list done">
