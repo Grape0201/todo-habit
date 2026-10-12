@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from . import config, db
@@ -17,6 +18,22 @@ def create_app() -> FastAPI:
         yield
 
     app = FastAPI(title="todo-habit", lifespan=lifespan)
+
+    @app.get("/sw.js", include_in_schema=False)
+    def service_worker():
+        return FileResponse(
+            BASE / "static" / "sw.js",
+            media_type="application/javascript",
+            headers={"Cache-Control": "no-cache"},
+        )
+
+    @app.get("/favicon.ico", include_in_schema=False)
+    def favicon():
+        return FileResponse(
+            BASE / "static" / "icons" / "favicon.ico",
+            media_type="image/x-icon",
+        )
+
     app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
     app.mount("/uploads", StaticFiles(directory=config.uploads_dir()), name="uploads")
     for r in (pages, todos, categories, logs):
